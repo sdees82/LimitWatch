@@ -9,6 +9,7 @@ const {
   aggregateClaudeUsage,
   aggregateCodexUsage,
   buildClaudeHeaders,
+  createApp,
   getConfig,
   parseDays,
   parsePort,
@@ -18,6 +19,46 @@ const {
 
 function makeURL(pathname) {
   return new URL(pathname, "http://127.0.0.1:8787");
+}
+
+async function invokeApp(app, { method = "GET", url = "/", headers = {} } = {}) {
+  const chunks = [];
+  let statusCode = null;
+  let responseHeaders = null;
+
+  const req = {
+    method,
+    url,
+    headers,
+  };
+
+  const res = {
+    writeHead(code, nextHeaders) {
+      statusCode = code;
+      responseHeaders = nextHeaders;
+      return this;
+    },
+    end(body = "") {
+      chunks.push(body);
+    },
+  };
+
+  app.emit("request", req, res);
+  await new Promise((resolve) => setImmediate(resolve));
+
+  return {
+    statusCode,
+    headers: responseHeaders,
+    body: chunks.join(""),
+    json() {
+      return JSON.parse(chunks.join(""));
+    },
+  };
+}
+
+function createTestApp(options = {}) {
+  const server = createApp(options);
+  return server;
 }
 
 test("getConfig applies defaults and validates values", () => {
@@ -124,6 +165,65 @@ test("aggregateClaudeUsage normalizes remote payload", async () => {
   assert.deepEqual(result.rateLimits?.extra_usage, { is_enabled: true });
 });
 
+test("aggregateCodexUsage ignores corrupted jsonl lines", () => {
+  const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "limitwatch-server-corrupt-"));
+
+  try {
+    const sessionDir = path.join(rootDir, "session-a");
+    fs.mkdirSync(sessionDir, { recursive: true });
+
+    fs.writeFileSync(
+      path.join(sessionDir, "events.jsonl"),
+      [
+        "{\"not-valid-json\"",
+        JSON.stringify({
+          timestamp: "2026-03-20T10:00:00Z",
+          type: "event_msg",
+          payload: {
+            type: "token_count",
+            info: {
+              total_token_usage: {
+                input_tokens: 7,
+                cached_input_tokens: 2,
+                output_tokens: 1,
+                reasoning_output_tokens: 0,
+                total_tokens: 8,
+              },
+            },
+          },
+        }),
+      ].join("\n")
+    );
+
+    const result = aggregateCodexUsage(Date.parse("2026-03-20T00:00:00Z"), {
+      now: Date.parse("2026-03-20T12:00:00Z"),
+      sessionsRoot: rootDir,
+    });
+
+    assert.equal(result.sessionCount, 1);
+    assert.equal(result.totals.totalTokens, 8);
+  } finally {
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("aggregateCodexUsage returns empty usage for a missing sessions directory", () => {
+  const missingDir = path.join(os.tmpdir(), `limitwatch-missing-${Date.now()}`);
+  const result = aggregateCodexUsage(Date.parse("2026-03-20T00:00:00Z"), {
+    now: Date.parse("2026-03-20T12:00:00Z"),
+    sessionsRoot: missingDir,
+  });
+
+  assert.equal(result.sessionCount, 0);
+  assert.deepEqual(result.totals, {
+    inputTokens: 0,
+    cachedInputTokens: 0,
+    outputTokens: 0,
+    reasoningOutputTokens: 0,
+    totalTokens: 0,
+  });
+});
+
 test("aggregateCodexUsage aggregates max session totals and latest rate limits", () => {
   const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "limitwatch-server-test-"));
 
@@ -211,6 +311,94 @@ test("aggregateCodexUsage aggregates max session totals and latest rate limits",
       totalTokens: 42,
     });
     assert.deepEqual(result.rateLimits, { secondary: { used_percent: 15 } });
+  } finally {
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("HTTP /health returns ok", async () => {
+  const app = createTestApp();
+  const response = await invokeApp(app, { url: "/health" });
+
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(response.json(), { ok: true });
+});
+
+test("HTTP /usage returns 400 for unsupported providers", async () => {
+  const app = createTestApp();
+  const response = await invokeApp(app, { url: "/usage?provider=nope" });
+
+  assert.equal(response.statusCode, 400);
+  const body = response.json();
+  assert.equal(body.error, "Failed to read usage data");
+  assert.match(body.detail, /Unsupported provider/);
+});
+
+test("HTTP /usage surfaces Claude auth failures", async () => {
+  const app = createTestApp({
+    config: {
+      host: "127.0.0.1",
+      port: 8787,
+      sessionsRoot: "/tmp",
+      claudeUsageUrl: DEFAULT_CLAUDE_USAGE_URL,
+      claudeAuthHeader: "",
+      claudeOauthToken: "",
+      claudeCookie: "",
+    },
+  });
+
+  const response = await invokeApp(app, { url: "/usage?provider=claude" });
+  assert.equal(response.statusCode, 500);
+  const body = response.json();
+  assert.match(body.detail, /Claude usage requires/);
+});
+
+test("HTTP /usage returns codex payload for valid requests", async () => {
+  const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "limitwatch-http-codex-"));
+  const sessionDir = path.join(rootDir, "session-a");
+  fs.mkdirSync(sessionDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(sessionDir, "events.jsonl"),
+    JSON.stringify({
+      timestamp: "2026-03-20T10:00:00Z",
+      type: "event_msg",
+      payload: {
+        type: "token_count",
+        info: {
+          total_token_usage: {
+            input_tokens: 11,
+            cached_input_tokens: 3,
+            output_tokens: 2,
+            reasoning_output_tokens: 1,
+            total_tokens: 13,
+          },
+        },
+        rate_limits: { primary: { used_percent: 22 } },
+      },
+    })
+  );
+
+  const app = createTestApp({
+    config: {
+      host: "127.0.0.1",
+      port: 8787,
+      sessionsRoot: rootDir,
+      claudeUsageUrl: DEFAULT_CLAUDE_USAGE_URL,
+      claudeAuthHeader: "",
+      claudeOauthToken: "",
+      claudeCookie: "",
+    },
+    sessionsRoot: rootDir,
+    now: Date.parse("2026-03-20T12:00:00Z"),
+  });
+
+  try {
+    const response = await invokeApp(app, { url: "/usage?provider=codex&startDate=2026-03-20" });
+    assert.equal(response.statusCode, 200);
+    const body = response.json();
+    assert.equal(body.provider, "codex");
+    assert.equal(body.sessionCount, 1);
+    assert.equal(body.totals.totalTokens, 13);
   } finally {
     fs.rmSync(rootDir, { recursive: true, force: true });
   }

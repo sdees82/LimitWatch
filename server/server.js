@@ -4,57 +4,10 @@ const path = require("node:path");
 const http = require("node:http");
 const { URL } = require("node:url");
 
-const DEFAULT_CLAUDE_USAGE_URL = process.env.CLAUDE_USAGE_URL || "https://api.anthropic.com/api/oauth/usage";
+const DEFAULT_CLAUDE_USAGE_URL = "https://api.anthropic.com/api/oauth/usage";
 const SUPPORTED_PROVIDERS = new Set(["codex", "claude"]);
-const DEFAULT_HOST = process.env.HOST || "127.0.0.1";
-const DEFAULT_PORT = process.env.PORT || 8787;
-
-loadDefaultEnvFiles();
-
-function loadDefaultEnvFiles() {
-  const candidatePaths = [
-    path.join(__dirname, ".env"),
-    path.join(__dirname, "..", ".env"),
-  ];
-
-  for (const filePath of candidatePaths) {
-    loadEnvFile(filePath);
-  }
-}
-
-function loadEnvFile(filePath) {
-  if (!fs.existsSync(filePath)) {
-    return;
-  }
-
-  const lines = fs.readFileSync(filePath, "utf8").split("\n");
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) {
-      continue;
-    }
-
-    const separatorIndex = trimmed.indexOf("=");
-    if (separatorIndex <= 0) {
-      continue;
-    }
-
-    const key = trimmed.slice(0, separatorIndex).trim();
-    if (!key || Object.prototype.hasOwnProperty.call(process.env, key)) {
-      continue;
-    }
-
-    let value = trimmed.slice(separatorIndex + 1).trim();
-    if (
-      (value.startsWith("\"") && value.endsWith("\"")) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-
-    process.env[key] = value;
-  }
-}
+const DEFAULT_HOST = "127.0.0.1";
+const DEFAULT_PORT = 8787;
 
 function createError(statusCode, message) {
   const error = new Error(message);
@@ -542,7 +495,6 @@ module.exports = {
   emptyUsage,
   getConfig,
   handleUsage,
-  loadEnvFile,
   normalizeClaudeWindow,
   normalizeUsage,
   parseDays,

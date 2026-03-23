@@ -5,11 +5,11 @@
   "license": "MIT",
   "main": "server.js",
   "engines": {
-    "node": ">=18"
+    "node": ">=20.6"
   },
   "scripts": {
     "lint": "node --check server.js",
     "test": "node --test",
-    "start": "node server.js"
+    "start": "node --env-file=.env server.js"
   }
 }
