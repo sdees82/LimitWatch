@@ -1,7 +1,7 @@
 # Limit Watch
 
 <p align="center">
-  <img src="./icon.png" alt="Limit Watch logo" width="160" />
+  <img src="./icon.png" alt="Limit Watch logo" width="360" />
 </p>
 
 `Limit Watch` is a watchOS app for viewing current `Codex` and `Claude Code` usage from an Apple Watch.
