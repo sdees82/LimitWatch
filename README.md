@@ -85,7 +85,7 @@ http://0.0.0.0:8787
 The watch should connect to your Mac's LAN IP, for example:
 
 ```text
-http://192.168.2.219:8787
+http://192.168.1.10:8787
 ```
 
 ## Local API
@@ -144,9 +144,3 @@ Check that `.env` contains one of:
 
 Then restart the server.
 
-## Notes For Contributors
-
-- Keep provider credentials in `server/.env`, not in the watch app
-- Do not commit local `.env` files or build artifacts
-- The root README is the main setup guide for the project
-- See [CONTRIBUTING.md](/Users/seandees/Desktop/project/CONTRIBUTING.md) for development workflow

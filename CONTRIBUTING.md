@@ -28,7 +28,7 @@ npm test
 npm start
 ```
 
-The root [README](/Users/seandees/Desktop/project/README.md) is the main setup guide for running the full project.
+The root [`README.md`](./README.md) is the main setup guide for running the full project.
 
 ## Pull Requests
 

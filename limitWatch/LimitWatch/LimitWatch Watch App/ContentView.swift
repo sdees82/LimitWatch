@@ -432,8 +432,8 @@ private extension RateLimitWindow {
         isLoading: false,
         errorMessage: nil,
         statusMessage: nil,
-        serverAddress: "192.168.2.219",
-        hostDescription: "192.168.2.219"
+        serverAddress: "192.168.1.10",
+        hostDescription: "192.168.1.10"
     )
 }
 
@@ -444,7 +444,7 @@ private extension RateLimitWindow {
         isLoading: false,
         errorMessage: nil,
         statusMessage: nil,
-        serverAddress: "192.168.2.219",
-        hostDescription: "192.168.2.219"
+        serverAddress: "192.168.1.10",
+        hostDescription: "192.168.1.10"
     )
 }

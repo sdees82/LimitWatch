@@ -3,7 +3,7 @@ import Foundation
 struct ServerConfiguration {
     static let storageKey = "serverAddress"
     static let defaultPort = 8787
-    static let placeholderAddress = "192.168.2.219"
+    static let placeholderAddress = "192.168.1.10"
 
     let rawValue: String
 
@@ -187,7 +187,7 @@ final class QuotaService {
             throw NSError(
                 domain: "QuotaService",
                 code: -2,
-                userInfo: [NSLocalizedDescriptionKey: "The Mac server address is invalid. Enter an IP like 192.168.2.219 or host:port."]
+                userInfo: [NSLocalizedDescriptionKey: "The Mac server address is invalid. Enter an IP like 192.168.1.10 or host:port."]
             )
         }
 

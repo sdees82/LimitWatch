@@ -2,7 +2,7 @@
 
 This package is the local helper server for `Limit Watch`.
 
-Most users should start with the root [README](/Users/seandees/Desktop/project/README.md), which covers the full project setup. This file is only for server-specific details.
+Most users should start with the root [`README.md`](../README.md), which covers the full project setup. This file is only for server-specific details.
 
 ## Responsibilities
 
