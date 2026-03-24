@@ -113,6 +113,10 @@ struct ProviderSummaryScreen: View {
     let serverAddress: String
     let hostDescription: String
 
+    private let horizontalPadding: CGFloat = 14
+    private let topPadding: CGFloat = 4
+    private let bottomPadding: CGFloat = 6
+
     var body: some View {
         ZStack {
             WatchPalette.background.ignoresSafeArea()
@@ -156,9 +160,9 @@ struct ProviderSummaryScreen: View {
 
                     Spacer(minLength: 0)
                 }
-                .padding(.horizontal, 14)
-                .padding(.top, 12)
-                .padding(.bottom, 6)
+                .padding(.horizontal, horizontalPadding)
+                .padding(.top, topPadding)
+                .padding(.bottom, bottomPadding)
             }
         }
     }
@@ -278,6 +282,10 @@ struct SettingsScreen: View {
     let errorMessage: String?
     let onTestConnection: () -> Void
 
+    private let horizontalPadding: CGFloat = 14
+    private let topPadding: CGFloat = 8
+    private let bottomPadding: CGFloat = 10
+
     var body: some View {
         ZStack {
             WatchPalette.background.ignoresSafeArea()
@@ -322,9 +330,9 @@ struct SettingsScreen: View {
 
                     Spacer(minLength: 0)
                 }
-                .padding(.horizontal, 14)
-                .padding(.top, 18)
-                .padding(.bottom, 10)
+                .padding(.horizontal, horizontalPadding)
+                .padding(.top, topPadding)
+                .padding(.bottom, bottomPadding)
             }
         }
     }

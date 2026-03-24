@@ -1,14 +1,14 @@
 # Limit Watch
 
 <p align="center">
-  <img src="./icon.png" alt="Limit Watch logo" width="360" />
+  <img src="./logo.png" alt="Limit Watch logo" width="360" />
 </p>
 
 `Limit Watch` is a watchOS app for viewing current `Codex` and `Claude Code` usage from an Apple Watch.
 
 The repo has two parts:
 
-- `limitWatch/LimitWatch`: the watchOS app
+- `LimitWatch`: the watchOS app
 - `server`: a local Node.js helper server running on your Mac
 
 The watch app talks to the local server over your LAN. The server reads local Codex session logs, optionally fetches Claude usage, and returns a normalized JSON response for the watch app.
@@ -22,7 +22,7 @@ The watch app talks to the local server over your LAN. The server reads local Co
 
 ## Requirements
 
-- macOS with Xcode installed
+- macOS with Xcode 26.2 or newer installed
 - A paired `iPhone` and `Apple Watch`
 - Your `Mac`, `iPhone`, and `Apple Watch` on the same Wi-Fi network
 - Node.js `20.6+`
@@ -64,8 +64,8 @@ If `en0` returns nothing, try:
 ipconfig getifaddr en1
 ```
 
-3. Open `limitWatch/LimitWatch/LimitWatch.xcodeproj` in Xcode.
-4. Choose your own signing team if Xcode prompts for one.
+3. Open `LimitWatch/LimitWatch.xcodeproj` in Xcode.
+4. In Xcode, choose your own signing team for both targets if prompted.
 5. Install the app on a paired iPhone + Apple Watch.
 6. In the watch app, open the settings screen, enter your Mac's LAN IP, and tap `Test Server`.
 
@@ -76,7 +76,7 @@ ipconfig getifaddr en1
 - The server exposes local endpoints on port `8787`
 - The watch app requests those endpoints and renders the returned usage data
 
-The server should listen on:
+With the example `.env` above, the server should listen on:
 
 ```text
 http://0.0.0.0:8787
@@ -107,7 +107,7 @@ For `codex`, the app uses `startDate=YYYY-MM-DD`. The server also accepts `days=
 Check all of the following:
 
 - the server is running with `npm start`
-- the server startup log says `http://0.0.0.0:8787`, not `127.0.0.1:8787`
+- if you used the example `.env`, the server startup log says `http://0.0.0.0:8787`, not `127.0.0.1:8787`
 - the watch app is pointed at your Mac's actual LAN IP
 - your Mac, iPhone, and Watch are on the same Wi-Fi
 - macOS firewall is not blocking incoming connections to Node or Terminal
@@ -143,4 +143,3 @@ Check that `.env` contains one of:
 - `CLAUDE_CODE_COOKIE`
 
 Then restart the server.
-
